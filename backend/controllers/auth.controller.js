@@ -177,24 +177,3 @@ export const googleAuth = async (req,res) =>{
 
 };
 
-export const googleAuthLogin = async (req,res) =>{
-try {
-    const {email}=req.body
-
-        const user=await User.findOne({email})
-
-        if(!user)
-        {
-            return res.status(400).json({"error":"invalid credential //email not found//"})
-        }
-        
-        
-   
-        return res.status(201).json(user)
-
-    }
-    catch(error)
-    {
-        return res.status(500).json({"error":"server error "})
-    }
-};
