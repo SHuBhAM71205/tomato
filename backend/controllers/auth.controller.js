@@ -2,83 +2,65 @@ import User from "../models/user.model.js"
 import bcrypt from "bcryptjs";
 import genToken from "../utils/token.utils.js";
 import { sendOtp } from "../utils/mail.utils.js";
-export const signup=async(req,res)=>{
-    try{
-        const {fullName,email,password,mobile,role}=req.body
 
-        const temp_user=await User.findOne({email})
-
-        if(temp_user)
-        {
-            return res.status(400).json({"error":"invalid credential //email//"})
-        }
-        if(password.length<6)
-        {
-            return res.status(400).json({"error":"password must be 6 character"})
-        }
-
-        const hashPassword=await bcrypt.hash(password,10)
-
-        const user=User.create({fullName,email,password:hashPassword,mobile,role})
-        if(!user)
-        {
-            return res.status(500).json({"error":"error creating user "})
-        }
-
-        const token=await genToken(user._id)
-        res.cookie("token",token,{
-            secure:false,
-            sameSite:"strict",
-            maxAge:7*24*60*60*1000,
-            httpOnly:true
-        })
-
-        return res.status(201).json(user)
-
-    }
-    catch(error)
-    {
-        console.log(error)
-        return res.status(500).json({"error":"server error "})
-    }
-}
-
-export const login=async(req,res)=>{
-    try{
-        const {email,password}=req.body
-
-        const user=await User.findOne({email})
-
-        if(!user)
-        {
-            return res.status(400).json({"error":"invalid credential //email not found//"})
-        }
-        
-        const isMatch=await bcrypt.compare(password,user.password)
-        
-        if(!isMatch)
-        {
-            return res.status(400).json({"error":"invalid credential //invalid password//"})
-        }
-   
-        return res.status(201).json(user)
-
-    }
-    catch(error)
-    {
-        return res.status(500).json({"error":"server error "})
-    }
-}
-
-export const logout=async(req,res)=>{
+export const signup = async (req, res) => {
     try {
-        res.clearCookie("token")
-        return res.status(201)
-    } catch (error) {
-        return res.status(500).json({"error":"cant logout server error"})
-    }
-}
+        const { fullName, email, password, mobile, role } = req.body;
 
+        const temp_user = await User.findOne({ email });
+        if (temp_user) {
+            return res.status(400).json({ error: "Email already registered" });
+        }
+
+        if (password.length < 6) {
+            return res.status(400).json({ error: "Password must be at least 6 characters" });
+        }
+
+        const hashPassword = await bcrypt.hash(password, 10);
+        const user = await User.create({ fullName, email, password: hashPassword, mobile, role });
+
+        const token = await genToken(user._id);
+        res.cookie("token", token, {
+            secure: false,
+            sameSite: "strict",
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            httpOnly: true
+        });
+
+        return res.status(201).json(user);
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "server error" });
+    }
+};
+export const login = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ error: "Invalid credentials (email not found)" });
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ error: "Invalid credentials (wrong password)" });
+        }
+
+        const token = await genToken(user._id);
+        res.cookie("token", token, {
+            secure: false,
+            sameSite: "strict",
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            httpOnly: true
+        });
+
+        return res.status(200).json(user);
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "server error" });
+    }
+};
 export const getOTP = async (req, res) => {
     try {
         const { email } = req.body;
@@ -155,25 +137,67 @@ export const resetPassword = async (req, res) => {
     }
 };
 
-
-export const googleAuth = async (req,res) =>{
+export const googleAuth = async (req, res) => {
     try {
-        const {email,fullName,mobile,role}=req.body;
-        const user = await User.findOne({ email });
+        const { email, fullName, mobile, role } = req.body;
+        let user = await User.findOne({ email });
+
         if (!user) {
-            const newUser = new User({
+            user = await User.create({
                 email,
                 fullName,
                 mobile,
-                role
+                role,
+                password: null // No password for Google accounts
             });
-            await newUser.save();
-            return res.status(201).json(newUser);
         }
+
+        const token = await genToken(user._id);
+        res.cookie("token", token, {
+            secure: false,
+            sameSite: "strict",
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            httpOnly: true
+        });
+
         return res.status(200).json(user);
     } catch (error) {
-        console.log(error)
+        console.log(error);
+        return res.status(500).json({ error: "server error" });
     }
+};
+export const googleAuthLogin = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ email });
+        
+        if (!user) {
+            
+            return res.status(404).json({ error: "User not found. Please sign up with Google first." });
+        }
 
+        const token = await genToken(user._id);
+        res.cookie("token", token, {
+            secure: false,
+            sameSite: "strict",
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            httpOnly: true
+        });
+
+
+        return res.status(200).json(user);
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "server error" });
+    }
 };
 
+export const logout = async (req,res) =>{
+    try {
+        res.clearCookie("token");
+        return res.status(200).json({ message: "Logged out successfully" });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "server error" });
+    }
+}

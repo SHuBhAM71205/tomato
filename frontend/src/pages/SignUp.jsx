@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from "axios"
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from '../firebase';
+import { useDispatch } from 'react-redux';
+import { setUserData } from '../redux/user.slice';
 
 const primaryColor = "#E17100";
 const hoverColor = "#BB4D00";
@@ -26,9 +28,8 @@ export default function SignUp() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState("user");
-
   const roles = ["user", "owner", "deliveryBoy"];
-
+  const despatch=useDispatch();
   // Handle input change
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -44,8 +45,8 @@ export default function SignUp() {
     console.log("Form submitted:", { ...formData,role });
     
     try {
-      const res=await axios.post(`${backend}/api/auth/signup`,{...formData,role},{withCredentials:true}
-      )
+      const res=await axios.post(`${backend}/api/auth/signup`,{...formData,role},{withCredentials:true})
+      despatch(setUserData(res.data))
     } catch (error) {
       console.log(error)
     }
@@ -75,7 +76,7 @@ export default function SignUp() {
       },
       {withCredentials:true}
     )
-    console.log(result)
+    despatch(setUserData(res.data))
   }
   return (
     <div className='min-h-screen flex items-center justify-center p-4 w-full' style={{ backgroundColor: bgColor }}>

@@ -3,7 +3,10 @@ import { FaRegEye, FaEyeSlash } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { useNavigate } from 'react-router-dom';
 import axios from "axios"
-
+import { useDispatch } from 'react-redux';
+import { setUserData } from '../redux/user.slice';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { auth } from '../firebase';
 const primaryColor = "#E17100";
 const hoverColor = "#BB4D00";
 const bgColor = "#f3f4f6";
@@ -26,6 +29,8 @@ export default function SignIn() {
 
   const roles = ["user", "owner", "deliveryBoy"];
 
+  const dispatch=useDispatch();
+  
   // Handle input change
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -43,16 +48,23 @@ export default function SignIn() {
     try {
         const res=await axios.post(`${backend}/api/auth/login`,{...formData,role},{withCredentials:true}
         )
-        console.log(res)
+
+        dispatch(setUserData(res.data))
+        navigate("/")
     } catch (error) {
       console.log(error)
     }
   };
 
   const handleGoogleLogin = async () => {
+    const provider=new GoogleAuthProvider()
+    provider.addScope('https://www.googleapis.com/auth/user.phonenumbers.read');
+    const result=await signInWithPopup(auth,provider)
     try {
-      const res = await axios.get(`${backend}/api/auth/google-auth-login`, { withCredentials: true });
-      console.log(res);
+      const res = await axios.post(`${backend}/api/auth/google-auth-login`, { email: result.user.email, fullName: result.user.displayName, mobile: result.user.phoneNumber, role: "user" },{ withCredentials: true });
+
+      dispatch(setUserData(res.data))
+      navigate("/")
     } catch (error) {
       console.log(error);
     }
