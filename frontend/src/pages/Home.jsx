@@ -2,7 +2,7 @@ import React from "react";
 import { useSelector } from "react-redux";
 import UserDeshboard from "../components/UserDeshboard";
 import DiliveryBoyDeshboard from "../components/DiliveryBoyDeshboard";
-import AdminDeshboard from "../components/AdminDeshboard";
+import OwnerDeshboard from "../components/OwnerDeshboard";
 import getCity from "../hooks/useGetCity";
 
 const primaryColor = "#E17100";
@@ -28,7 +28,7 @@ function Home() {
       ) : userData.role === "deliveryBoy" ? (
         <DiliveryBoyDeshboard />
       ) : (
-        <AdminDeshboard />
+        <OwnerDeshboard />
       )}
     </div>
   );

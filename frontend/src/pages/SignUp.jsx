@@ -47,6 +47,8 @@ export default function SignUp() {
     try {
       const res=await axios.post(`${backend}/api/auth/signup`,{...formData,role},{withCredentials:true})
       despatch(setUserData(res.data))
+      window.alert("Account created successfully redirect to the login page")
+      navigate("/login");
     } catch (error) {
       console.log(error)
     }
@@ -77,6 +79,8 @@ export default function SignUp() {
       {withCredentials:true}
     )
     despatch(setUserData(res.data))
+    window.alert("Account created successfully redirect to the login page")
+    navigate("/login");
   }
   return (
     <div className='min-h-screen flex items-center justify-center p-4 w-full' style={{ backgroundColor: bgColor }}>
